@@ -1,7 +1,7 @@
 // crawler/bosscrawler.js
 import axios from "axios";
 import * as cheerio from "cheerio";
-import Boss from "../model/Boss.js";
+import Boss from "../model/boss.js";
 import connectDB from "../config/db.js";
 
 const BASE_URL = "https://maplen.gg/boss";
