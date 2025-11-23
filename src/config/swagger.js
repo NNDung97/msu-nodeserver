@@ -9,10 +9,10 @@ const options = {
       description: 'API documentation for MSU project',
     },
     servers: [
-      {
-        url: 'http://localhost:3000',
-      },
+      { url: 'https://msu-nodeserver.vercel.app' },
+      { url: 'http://localhost:3000' },
     ],
+
     components: {
       securitySchemes: {
         // bearerAuth: {
