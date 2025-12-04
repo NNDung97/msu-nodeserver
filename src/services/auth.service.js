@@ -1,5 +1,6 @@
 import axios from 'axios';
 import jwt from 'jsonwebtoken';
+import { saveOrUpdateUser } from './user.service.js';
 
 export const loginWithWallet = async (walletAddress) => {
   const url = `${process.env.MSU_URL}/accounts/${walletAddress}/characters`;
@@ -28,7 +29,15 @@ export const loginWithWallet = async (walletAddress) => {
       { expiresIn: '7d' }
     );
 
-    return { accessToken, refreshToken, characters };
+    // Lưu hoặc cập nhật user vào MongoDB
+    const user = await saveOrUpdateUser({
+      walletAddress,
+      refreshToken
+    });
+
+    console.log('✅ User saved to MongoDB:', user._id);
+
+    return { accessToken, refreshToken, characters, user };
 
   } catch (error) {
     console.error(error.response?.data || error.message);

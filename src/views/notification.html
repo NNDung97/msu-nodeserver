@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Quản lý Thông báo</title>
+  <link rel="stylesheet" href="/css/notification.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div style="display: flex; justify-content: flex-start; align-items: center; gap: 20px;">
+        <button id="backBtn" class="back-btn">← Trở về Home</button>
+        <div style="flex: 1;">
+          <h1>📬 Quản lý Thông báo</h1>
+          <p>Tạo, gửi và quản lý thông báo cho người dùng</p>
+        </div>
+      </div>
+    </header>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="send-all">Gửi cho Tất cả</button>
+      <button class="tab-btn" data-tab="send-single">Gửi cho 1 User</button>
+      <button class="tab-btn" id="managementLink">📋 Quản lý Thông báo</button>
+    </div>
+
+    <!-- Tab 1: Gửi cho tất cả -->
+    <div id="send-all" class="tab-content active">
+      <div class="form-section">
+        <h2>📢 Gửi thông báo cho Tất cả Users</h2>
+        <p style="color: #666; margin-bottom: 16px;">Thông báo sẽ được gửi tới tất cả người dùng đã đăng ký trong hệ thống.</p>
+        <form id="broadcastForm">
+          <div class="row">
+            <div class="form-group">
+              <label>Loại *</label>
+              <select id="broadcastType">
+                <option value="info">ℹ️ Info</option>
+                <option value="success">✅ Success</option>
+                <option value="warning">⚠️ Warning</option>
+                <option value="error">❌ Error</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Tiêu đề *</label>
+            <input type="text" id="broadcastTitle" placeholder="Ví dụ: Bảo trì hệ thống" required />
+          </div>
+          <div class="form-group">
+            <label>Nội dung *</label>
+            <textarea id="broadcastMessage" placeholder="Nhập nội dung thông báo..." required></textarea>
+          </div>
+          <div class="form-group">
+            <label>Dữ liệu bổ sung (JSON - không bắt buộc)</label>
+            <textarea id="broadcastData" placeholder='{"key":"value"}'></textarea>
+          </div>
+          <button type="submit" class="btn-primary">Gửi cho Tất cả</button>
+        </form>
+        <div id="broadcastResponse"></div>
+      </div>
+    </div>
+
+    <!-- Tab 2: Gửi cho 1 user -->
+    <div id="send-single" class="tab-content">
+      <div class="form-section">
+        <h2>📤 Gửi thông báo cho 1 User</h2>
+        <form id="singleForm">
+          <div class="row">
+            <div class="form-group">
+              <label>Wallet Address *</label>
+              <input type="text" id="walletAddress" placeholder="0x..." required />
+            </div>
+            <div class="form-group">
+              <label>Loại *</label>
+              <select id="type">
+                <option value="info">ℹ️ Info</option>
+                <option value="success">✅ Success</option>
+                <option value="warning">⚠️ Warning</option>
+                <option value="error">❌ Error</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Tiêu đề *</label>
+            <input type="text" id="title" placeholder="Ví dụ: Cập nhật tài khoản" required />
+          </div>
+          <div class="form-group">
+            <label>Nội dung *</label>
+            <textarea id="message" placeholder="Nhập nội dung thông báo..." required></textarea>
+          </div>
+          <div class="form-group">
+            <label>Dữ liệu bổ sung (JSON - không bắt buộc)</label>
+            <textarea id="data" placeholder='{"key":"value"}'></textarea>
+          </div>
+          <button type="submit" class="btn-primary">Gửi Thông báo</button>
+        </form>
+        <div id="singleResponse"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.dataset.tab) {
+          document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+          btn.classList.add('active');
+          document.getElementById(btn.dataset.tab).classList.add('active');
+        }
+      });
+    });
+
+    const apiBase = '/api/notification';
+
+    // Single notification form
+    document.getElementById('singleForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const responseDiv = document.getElementById('singleResponse');
+      responseDiv.innerHTML = '';
+
+      const payload = {
+        walletAddress: document.getElementById('walletAddress').value.trim(),
+        title: document.getElementById('title').value.trim(),
+        message: document.getElementById('message').value.trim(),
+        type: document.getElementById('type').value,
+      };
+
+      const dataRaw = document.getElementById('data').value.trim();
+      if (dataRaw) {
+        try { payload.data = JSON.parse(dataRaw); } 
+        catch(err) { 
+          responseDiv.className = 'response error';
+          responseDiv.innerHTML = `<strong>❌ JSON không hợp lệ:</strong> ${err.message}`; 
+          return; 
+        }
+      }
+
+      try {
+        const res = await fetch(`${apiBase}/send`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const json = await res.json();
+        responseDiv.className = `response ${res.ok ? 'success' : 'error'}`;
+        responseDiv.innerHTML = `<strong>${res.ok ? '✅' : '❌'} ${json.message}</strong><pre>${JSON.stringify(json, null, 2)}</pre>`;
+        if (res.ok) document.getElementById('singleForm').reset();
+      } catch (err) {
+        responseDiv.className = 'response error';
+        responseDiv.innerHTML = `<strong>❌ Lỗi:</strong> ${err.message}`;
+      }
+    });
+
+    // Broadcast form
+    document.getElementById('broadcastForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const responseDiv = document.getElementById('broadcastResponse');
+      responseDiv.innerHTML = '';
+
+      const payload = {
+        title: document.getElementById('broadcastTitle').value.trim(),
+        message: document.getElementById('broadcastMessage').value.trim(),
+        type: document.getElementById('broadcastType').value,
+      };
+
+      const dataRaw = document.getElementById('broadcastData').value.trim();
+      if (dataRaw) {
+        try { payload.data = JSON.parse(dataRaw); } 
+        catch(err) { 
+          responseDiv.className = 'response error';
+          responseDiv.innerHTML = `<strong>❌ JSON không hợp lệ:</strong> ${err.message}`; 
+          return; 
+        }
+      }
+
+      try {
+        const res = await fetch(`${apiBase}/send-all`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const json = await res.json();
+        responseDiv.className = `response ${res.ok ? 'success' : 'error'}`;
+        responseDiv.innerHTML = `<strong>${res.ok ? '✅' : '❌'} ${json.message}</strong><pre>${JSON.stringify(json, null, 2)}</pre>`;
+        if (res.ok) document.getElementById('broadcastForm').reset();
+      } catch (err) {
+        responseDiv.className = 'response error';
+        responseDiv.innerHTML = `<strong>❌ Lỗi:</strong> ${err.message}`;
+      }
+    });
+
+    // Management link
+    document.getElementById('managementLink').addEventListener('click', () => {
+      window.location.href = '/api/notification/management/ui';
+    });
+
+    // Back button
+    document.getElementById('backBtn').addEventListener('click', () => {
+      window.location.href = '/';
+    });
+  </script>
+</body>
+</html>

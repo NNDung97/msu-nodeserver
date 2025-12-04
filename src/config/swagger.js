@@ -1,4 +1,9 @@
 import swaggerJSDoc from 'swagger-jsdoc';
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const options = {
   definition: {
@@ -12,18 +17,10 @@ const options = {
       { url: 'https://msu-nodeserver.vercel.app' },
       { url: 'http://localhost:3000' },
     ],
-
-    components: {
-      securitySchemes: {
-        // bearerAuth: {
-        //   type: 'http',
-        //   scheme: 'bearer',
-        //   bearerFormat: 'JWT',
-        // },
-      },
-    },
   },
-  apis: ['./src/routes/*.js'],  // Quét comment Swagger trong tất cả routes
+
+  // ❗ MUST USE ABSOLUTE PATH FOR VERCEL
+  apis: [path.join(__dirname, "../routes/*.js")],
 };
 
 const swaggerSpec = swaggerJSDoc(options);

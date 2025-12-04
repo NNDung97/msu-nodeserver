@@ -1,5 +1,4 @@
 import path from 'path';
-import { fileURLToPath } from 'url';
 import express from 'express';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
@@ -15,8 +14,11 @@ import itemsRoutes from './src/routes/items.route.js';
 import itemdetailsRoutes from './src/routes/itemdetails.route.js';
 import itemcrawlerRoutes from './src/routes/itemscrawler.route.js';
 import bossRoutes from './src/routes/boss.route.js';
+import userRoutes from './src/routes/user.route.js';
+import notificationRoutes from './src/routes/notification.route.js';
+import notificationDraftRoutes from './src/routes/notificationDraft.route.js';
 
-
+import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -34,6 +36,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// Serve static files (CSS, JS, images, etc.)
+app.use(express.static(path.join(__dirname, 'src', 'views')));
+
+// Serve home page
+app.get('/', (req, res) => {
+  const filePath = path.join(process.cwd(), 'src', 'views', 'home.html');
+  res.sendFile(filePath);
+});
+
 app.use('/api', authRoutes);
 app.use('/api/account', accRoutes);
 app.use('/api/character', charRoutes);
@@ -41,15 +52,18 @@ app.use('/api/items', itemsRoutes);
 app.use('/api/item-details', itemdetailsRoutes);
 app.use('/api/itemscrawler', itemcrawlerRoutes);
 app.use('/api/boss', bossRoutes);
+app.use('/api/user', userRoutes);
+app.use('/api/notification', notificationRoutes);
+app.use('/api/notification-draft', notificationDraftRoutes);
 
 // Swagger UI
-// app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Serve static files từ swagger-ui-dist (VERY IMPORTANT for Vercel)
-app.use('/api-docs', express.static(absolutePath()));
+// app.use('/api-docs', express.static(absolutePath()));
 
 // Render UI dựa trên static file
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+// app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // 404 handler
 app.use((req, res) => {
