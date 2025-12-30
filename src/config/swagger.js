@@ -17,6 +17,15 @@ const options = {
       { url: 'https://msu-nodeserver.vercel.app' },
       { url: 'http://localhost:3000' },
     ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
+      },
+    },
   },
 
   // ❗ MUST USE ABSOLUTE PATH FOR VERCEL

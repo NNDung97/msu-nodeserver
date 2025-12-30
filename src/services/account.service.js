@@ -12,6 +12,8 @@ export const getAccountCharacters = async (walletAddress, pageNo, pageSize) => {
       },
     });
 
+    console.log('check url', url);
+    console.log('check response', response.data);
     return response.data;
   } catch (error) {
     console.error('check get account char',error.response?.data || error.message);

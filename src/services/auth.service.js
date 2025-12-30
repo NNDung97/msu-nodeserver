@@ -1,46 +1,103 @@
 import axios from 'axios';
 import jwt from 'jsonwebtoken';
+import User from '../model/user.js';
 import { saveOrUpdateUser } from './user.service.js';
+import {
+  generateAccessToken,
+  generateRefreshToken,
+} from '../utils/jwt.js';
 
+/**
+ * LOGIN WITH WALLET
+ */
 export const loginWithWallet = async (walletAddress) => {
+  console.log('check walletAddress',walletAddress);
+  
   const url = `${process.env.MSU_URL}/accounts/${walletAddress}/characters`;
+
   try {
-    // Gọi API bên thứ 3
-    const response = await axios.get(url, {
+    // 1️⃣ Validate wallet qua API bên thứ 3
+    const { data } = await axios.get(url, {
       headers: {
-        'accept': 'application/json',
-        'x-nxopen-api-key': process.env.MSU_API_KEY, // lấy API_KEY từ .env
+        accept: 'application/json',
+        'x-nxopen-api-key': process.env.MSU_API_KEY,
       },
     });
 
-    // Nếu API trả về dữ liệu chứng tỏ wallet hợp lệ
-    const characters = response.data;
+    console.log('check data',data);
+    // const characters = Array.isArray(data) ? data : [];
+    const characters = data.data;
 
-    // Tạo access token & refresh token
-    const accessToken = jwt.sign(
-      { walletAddress },
-      process.env.JWT_SECRET,
-      { expiresIn: '10s' }
-    );
+    // 2️⃣ Save / update user
+    const user = await saveOrUpdateUser({ walletAddress });
 
-    const refreshToken = jwt.sign(
-      { walletAddress },
-      process.env.JWT_REFRESH_SECRET,
-      { expiresIn: '7d' }
-    );
+    if (!user || !user.isActive) {
+      throw new Error('User is disabled');
+    }
 
-    // Lưu hoặc cập nhật user vào MongoDB
-    const user = await saveOrUpdateUser({
-      walletAddress,
-      refreshToken
-    });
+    // 3️⃣ Generate tokens
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
 
-    console.log('✅ User saved to MongoDB:', user._id);
+    // 4️⃣ Save refresh token (rotate on login)
+    user.refreshToken = refreshToken;
+    await user.save();
 
-    return { accessToken, refreshToken, characters, user };
-
+    return {
+      userId: user._id,
+      accessToken,
+      refreshToken,
+      characters,
+      user
+    };
   } catch (error) {
-    console.error(error.response?.data || error.message);
-    throw new Error('Wallet address không hợp lệ hoặc API bên thứ 3 lỗi');
+    console.error('[loginWithWallet]', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+/**
+ * REFRESH TOKEN
+ */
+export const refreshTokenService = async (refreshToken) => {
+  try {
+    if (!refreshToken) {
+      throw new Error('Refresh token is required');
+    }
+
+    // 1️⃣ Verify refresh token
+    const decoded = jwt.verify(
+      refreshToken,
+      process.env.JWT_REFRESH_SECRET
+    );
+
+    // 2️⃣ Find user & validate token in DB
+    const user = await User.findById(decoded.userId);
+
+    console.log('Equal:', user.refreshToken === refreshToken);
+    if (!user || user.refreshToken !== refreshToken) {
+      throw new Error('Invalid refresh token');
+    }
+
+    if (!user.isActive) {
+      throw new Error('User is disabled');
+    }
+
+    // 3️⃣ Rotate tokens
+    const newAccessToken = generateAccessToken(user);
+    // const newRefreshToken = generateRefreshToken(user);
+    const newRefreshToken = refreshToken;
+
+    // 4️⃣ Save new refresh token
+    user.refreshToken = newRefreshToken;
+    await user.save();
+
+    return {
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+    };
+  } catch (error) {
+    console.error('[refreshTokenService]', error.message);
+    throw error;
   }
 };

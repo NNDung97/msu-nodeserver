@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Create Notification</title>
+  <style>
+    body { font-family: Arial; padding: 20px }
+    label { font-weight: bold }
+    input, textarea, select { width: 100%; padding: 8px; margin-bottom: 12px }
+    button { padding: 8px 16px }
+  </style>
+</head>
+<body>
+
+<h2>➕ Tạo thông báo mới</h2>
+
+<form method="POST" action="/admin/notifications/create">
+
+  <label>Title</label>
+  <input name="title" required />
+
+  <label>Body</label>
+  <textarea name="body" required></textarea>
+
+  <label>Target</label>
+  <select name="target">
+    <option value="ALL">ALL (Gửi tất cả user)</option>
+    <option value="USER">USER (Gửi 1 user)</option>
+  </select>
+
+  <label>Created By</label>
+  <input name="createdBy" value="system" readonly />
+
+  <button type="submit">🚀 Gửi thông báo</button>
+</form>
+
+<br />
+<a href="/admin/notifications">← Quay lại</a>
+
+</body>
+</html>

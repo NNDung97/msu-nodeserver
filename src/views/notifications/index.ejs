@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Notification Manager</title>
+  <style>
+    body { font-family: Arial; padding: 20px }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left }
+    th { background: #f4f4f4 }
+    .btn { padding: 6px 12px; text-decoration: none; border: 1px solid #333 }
+  </style>
+</head>
+<body>
+
+<h2>🔔 Notifications</h2>
+
+<a class="btn" href="/admin/notifications/create">➕ Tạo thông báo</a>
+
+<table>
+  <thead>
+    <tr>
+      <th>Title</th>
+      <th>Body</th>
+      <th>Target</th>
+      <th>Data</th>
+      <th>Created By</th>
+      <th>Created At</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% notifications.forEach(n => { %>
+      <tr>
+        <td><%= n.title %></td>
+        <td><%= n.body %></td>
+        <td><%= n.target %></td>
+        <td>
+          <% if (Object.keys(n.data || {}).length) { %>
+            <pre><%= JSON.stringify(n.data, null, 2) %></pre>
+          <% } else { %>
+            -
+          <% } %>
+        </td>
+        <td><%= n.createdBy %></td>
+        <td><%= n.createdAt.toLocaleString() %></td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table>
+
+</body>
+</html>
